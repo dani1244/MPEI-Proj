@@ -1,29 +1,29 @@
-function bloomFilter = createBloomFilter(sintomasUnicos, m, k)
-    % m: tamanho do vetor de bits
-    % k: número de funções hash
-    bloomFilter = zeros(m, 1);
-    hashFunctions = cell(k, 1);
-    for i = 1:k
-        hashFunctions{i} = @(x) mod(sum(double(x)), m) + 1; % Função hash simples, pode ser refinada
-    end
+function [filtroBloom, sintomasFiltrados] = bloomFilter(sintomasUnicos, sintomasInput, numHashFuncs, tamanhoFiltro)
+    % Inicializar o filtro de Bloom
+    filtroBloom = false(tamanhoFiltro, 1);
 
-    for i = 1:length(sintomasUnicos)
-        for j = 1:k
-            index = hashFunctions{j}(sintomasUnicos{i});
-            bloomFilter(index) = 1;
+    % Função auxiliar para hash (usa múltiplas funções hash)
+    function indices = bloomHashes(element, filtroSize, numFuncs)
+        rng(123); % Para consistência dos hashes
+        indices = zeros(1, numFuncs);
+        for k = 1:numFuncs
+            hash = string2hash(element, 'md5', k); 
+            indices(k) = mod(hash, filtroSize) + 1;
         end
     end
-end
 
+    % Inserir sintomas únicos no filtro de Bloom
+    for i = 1:length(sintomasUnicos)
+        indices = bloomHashes(sintomasUnicos{i}, tamanhoFiltro, numHashFuncs);
+        filtroBloom(indices) = true;
+    end
 
-% Verificar se um sintoma está no filtro
-function isPresent = checkBloomFilter(sintoma, bloomFilter, hashFunctions)
-    isPresent = true;
-    for i = 1:length(hashFunctions)
-        index = hashFunctions{i}(sintoma);
-        if bloomFilter(index) == 0
-            isPresent = false;
-            break;
+    % Filtrar sintomas de entrada
+    sintomasFiltrados = {};
+    for i = 1:length(sintomasInput)
+        indices = bloomHashes(sintomasInput{i}, tamanhoFiltro, numHashFuncs);
+        if all(filtroBloom(indices)) % Se todos os índices estão marcados, passa no filtro
+            sintomasFiltrados = [sintomasFiltrados; sintomasInput{i}];
         end
     end
 end
