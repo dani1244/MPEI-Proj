@@ -1,4 +1,5 @@
-function [respetivasProbs] = NaiveBayes(dataset,printsIntermedios,sintomasInput)
+function [respetivasProbs] = NaiveBayes(dataset, printsIntermedios, sintomasInput)
+    % Inicializar sintomas únicos
     diagnosticos = dataset(:, 1);
     doencas = unique(diagnosticos);
     sintomas = dataset(:, 2:end);
@@ -11,56 +12,64 @@ function [respetivasProbs] = NaiveBayes(dataset,printsIntermedios,sintomasInput)
     end
     sintomasUnicos = unique(totalSintomas);
 
+    % Configurar filtro de Bloom
+    tamanhoFiltro = 10 * length(sintomasUnicos); % Tamanho do filtro
+    numHashFuncs = 3; % Número de funções hash
 
+    % Aplicar o filtro de Bloom
+    [filtroBloom, sintomasFiltrados] = bloomFilter(sintomasUnicos, sintomasInput, numHashFuncs, tamanhoFiltro);
 
-    %TABELA COM TODOS OS DIAGNOTICOS(COM REPETIÇÃO) E OS SINTOMAS REGISTADOS
-    treino = zeros(length(diagnosticos),length(sintomasUnicos));
+    % Verificar se algum sintoma passou pelo filtro
+    if isempty(sintomasFiltrados)
+        disp("Nenhum sintoma do input é conhecido no dataset.");
+        respetivasProbs = [];
+        return;
+    end
+
+    % Continuar com o Naive Bayes para sintomas filtrados
+    % Criar a tabela de treino com sintomas únicos
+    treino = zeros(length(diagnosticos), length(sintomasUnicos));
     
     for linha = 1:length(diagnosticos)
-        sintomas = dataset(linha, 2:end);
+        sintomasLinha = dataset(linha, 2:end);
         
         for col = 1:length(sintomasUnicos)
             aux = sintomasUnicos{col};
     
-            num_ocorrencias = sum(strcmpi(sintomas,aux));
+            num_ocorrencias = sum(strcmpi(sintomasLinha, aux));
     
-            treino(linha,col) = num_ocorrencias;
+            treino(linha, col) = num_ocorrencias;
         end
     end
 
     if printsIntermedios
-        disp("\n\n\nNAIVE BAYES")
-        disp("Tabela de treino")
+        disp("\n\n\nNAIVE BAYES");
+        disp("Tabela de treino");
         disp(treino);
     end
 
-
-
-    %%VETOR COM AS PROBABILIDADES DE CADA DOENÇA (CALCULADO ATRAVÉS DO
-    %%NUMERO DE PRESENÇAS NO DATASET)
+    % Vetor com as probabilidades de cada doença
     probDoencas = zeros(length(doencas), 1);
     
     for diagnostico = 1:length(diagnosticos)
         for diagnosticoID = 1:length(doencas)
             if strcmpi(doencas{diagnosticoID}, diagnosticos{diagnostico})
-                probDoencas(diagnosticoID) = probDoencas(diagnosticoID) +1;
-                break
+                probDoencas(diagnosticoID) = probDoencas(diagnosticoID) + 1;
+                break;
             end
         end
     end
-    probDoencas = probDoencas/sum(probDoencas);
+    probDoencas = probDoencas / sum(probDoencas);
 
     if printsIntermedios
-        disp("Probabilidade dos diagnosticos")
+        disp("Probabilidade dos diagnósticos");
         disp(probDoencas);
     end
 
+    % Calculo de probabilidade do input para cada doença
+    probDoencasParaEsteInput = zeros(length(doencas), 1);
 
-
-    %%AGORA O CALCULO DE PROBABILIDADE DO NOSSO INPUT PARA CADA DOENÇA
-    probDoencasParaSintomas = zeros(length(doencas),1);
-
-    %Juntar todas as linhas com o mesmo diagnostico
+    % Juntar todas as linhas com o mesmo diagnóstico
     treinoParaDoencas = zeros(length(doencas), size(treino, 2));
     
     for i = 1:length(doencas)
@@ -70,37 +79,37 @@ function [respetivasProbs] = NaiveBayes(dataset,printsIntermedios,sintomasInput)
     end
     
     if printsIntermedios
-        disp("Treino juntado por classes")
+        disp("Treino juntado por classes");
         disp(treinoParaDoencas);
     end
 
-    %Mudar de contagem para probabilidade
+    % Transformar de contagem para probabilidade
     probSintomasParaDoencas = zeros(length(doencas), size(treino, 2));
     
     for i = 1:length(doencas)
-        probSintomasParaDoencas(i,:) = (treinoParaDoencas(i,:)+1)/(sum(treinoParaDoencas(i,:))+length(sintomasUnicos));
+        probSintomasParaDoencas(i, :) = (treinoParaDoencas(i, :) + 1) / (sum(treinoParaDoencas(i, :)) + length(sintomasUnicos));
     end
 
     if printsIntermedios
-        disp("Prabilidade de cada sintoma apos cada classe")
+        disp("Probabilidade de cada sintoma após cada classe");
         disp(probSintomasParaDoencas);
     end
 
-    %Finalmente as probabilidades para cada doença tendo em conta o input
+    % Finalmente as probabilidades para cada doença considerando o input
     for doencaID = 1:length(doencas)
-        prob = probDoencas(doencaID); %Começamos com P(classe)
-        for i = 1:length(sintomasInput)
+        prob = probDoencas(doencaID); % Começa com P(classe)
+        for i = 1:length(sintomasFiltrados)
             for y = 1:length(sintomasUnicos)
-                if strcmpi(sintomasInput(i),sintomasUnicos(y))
-                    prob = prob * probSintomasParaDoencas(doencaID,y);
-                    break
+                if strcmpi(sintomasFiltrados{i}, sintomasUnicos{y})
+                    prob = prob * probSintomasParaDoencas(doencaID, y);
+                    break;
                 end
             end
         end
         probDoencasParaEsteInput(doencaID) = prob;
     end
     
-    probDoencasParaEsteInput = probDoencasParaEsteInput/sum(probDoencasParaEsteInput);
+    probDoencasParaEsteInput = probDoencasParaEsteInput / sum(probDoencasParaEsteInput);
 
     respetivasProbs = cell(length(doencas), 2);
     for i = 1:length(doencas)
