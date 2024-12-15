@@ -51,35 +51,32 @@ function [respetivasProbs] = Minhash(dataset, sintomasInput)
         end
     end
 
-    % Calculate inputMinhash for the input symptoms
-    sintomasInputIds = arrayfun(@(x) find(strcmpi(sintomasUnicos, x)), sintomasInput);
+    sintomasInputIds = arrayfun(@(x) find(strcmpi(sintomasUnicos, x)), sintomasInput, 'UniformOutput', false);
+    %Na maior parte das situações, o bloom filter faz isto redudante
+    sintomasExistentes = cell2mat(sintomasInputIds(~cellfun('isempty', sintomasInputIds)));
     inputMinhash = zeros(1, totalPermutacoes);
-    for h = 1:totalPermutacoes
-        randomSeed = h * 42;
-        rng(randomSeed);
-        permutacoesAleatorias = randperm(length(sintomasUnicos));
-        hashPermutado = sintomasUnicosHash(permutacoesAleatorias);
-        inputMinhash(h) = min(hashPermutado(sintomasInputIds));
+    if ~isempty(sintomasExistentes)
+        for h = 1:totalPermutacoes
+            randomSeed = h * 42;
+            rng(randomSeed);
+            permutacoesAleatorias = randperm(length(sintomasUnicos));
+            hashPermutado = sintomasUnicosHash(permutacoesAleatorias);
+            inputMinhash(h) = min(hashPermutado(sintomasExistentes));
+        end
+    else
+        inputMinhash(:) = NaN; % or zeros, depending on your preference
     end
 
     % Compare input MinHash signature to all diagnoses
-    jaccardSimilarities = zeros(length(diagnosticos), 1);
+    jaccardSimilaridades = zeros(length(diagnosticos), 1);
     for d = 1:length(diagnosticos)
-        numMatches = sum(treinoMinhash(d, :) == inputMinhash);
-        jaccardSimilarities(d) = numMatches / totalPermutacoes;
-    end
-
-    % Aggregate similarities for unique diagnoses
-    probs = zeros(length(doencas), 1);
-    for i = 1:length(doencas)
-        indices = strcmpi(diagnosticos, doencas{i});
-        probs(i) = mean(jaccardSimilarities(indices));
+        numeroCorrespondencias = sum(treinoMinhash(d, :) == inputMinhash);
+        jaccardSimilaridades(d) = numeroCorrespondencias / totalPermutacoes;
     end
 
     respetivasProbs = cell(length(doencas), 2);
-    for i = 1:length(doencas)
-        respetivasProbs{i, 1} = doencas{i};
-        respetivasProbs{i, 2} = probs(i);
+    for i = 1:length(diagnosticos)
+        respetivasProbs{i, 1} = diagnosticos{i};
+        respetivasProbs{i, 2} = jaccardSimilaridades(i);
     end
-
 end
