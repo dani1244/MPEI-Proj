@@ -1,4 +1,34 @@
-function [filtroBloom, sintomasFiltrados] = BloomFilter(sintomasUnicos, sintomasInput, numHashFuncs, tamanhoFiltro)
+function [filtroBloom, sintomasFiltrados] = BloomFilter(dataset, sintomasInput)
+    % Extrair sintomas únicos do dataset
+    totalSintomas = {};
+    for i = 1:size(dataset, 1)
+        linhaAtual = dataset(i, 2:end); % Pega os sintomas da linha atual
+        linhaAtual = linhaAtual(~ismissing(linhaAtual)); % Remove valores 'missing'
+        linhaAtual = linhaAtual(~cellfun(@isempty, linhaAtual)); % Remove células vazias
+        totalSintomas = [totalSintomas, linhaAtual];
+    end
+    
+    % Garantir que totalSintomas contém apenas valores válidos
+    sintomasLimpos = {};
+    for i = 1:length(totalSintomas)
+        if ~ismissing(totalSintomas{i}) & ~isempty(totalSintomas{i})
+            sintomasLimpos{end+1} = totalSintomas{i};
+        end
+    end
+ 
+    % Atualizar totalSintomas
+    totalSintomas = sintomasLimpos;
+    
+    % Converter para strings (caso necessário)
+    totalSintomas = cellfun(@char, totalSintomas, 'UniformOutput', false);
+    
+    % Extrair valores únicos
+    sintomasUnicos = unique(totalSintomas);
+
+    numHashFuncs = 3; % Número de funções hash
+    tamanhoFiltro = 10 * length(sintomasUnicos); % Tamanho do filtro
+
+
     % Inicializar o filtro de Bloom
     filtroBloom = false(tamanhoFiltro, 1);
 

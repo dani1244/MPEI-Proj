@@ -68,15 +68,15 @@ function [respetivasProbs] = Minhash(dataset, sintomasInput)
     end
 
     % Compare input MinHash signature to all diagnoses
-    jaccardSimilaridades = zeros(length(diagnosticos), 1);
+    similaridadesJaccard = zeros(length(diagnosticos), 1);
     for d = 1:length(diagnosticos)
         numeroCorrespondencias = sum(treinoMinhash(d, :) == inputMinhash);
-        jaccardSimilaridades(d) = numeroCorrespondencias / totalPermutacoes;
+        similaridadesJaccard(d) = numeroCorrespondencias / totalPermutacoes;
     end
 
     respetivasProbs = cell(length(doencas), 2);
     for i = 1:length(diagnosticos)
         respetivasProbs{i, 1} = diagnosticos{i};
-        respetivasProbs{i, 2} = jaccardSimilaridades(i);
+        respetivasProbs{i, 2} = similaridadesJaccard(i);
     end
 end
