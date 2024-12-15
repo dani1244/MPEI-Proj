@@ -5,9 +5,11 @@ dataset = dataset(2:end, :); % Ignorar cabeçalhos, se existirem
 % Extrair sintomas únicos do dataset
 totalSintomas = {};
 for i = 1:size(dataset, 1)
-    totalSintomas = [totalSintomas, dataset(i, 2:end)];
+    linhaAtual = dataset(i, 2:end); % Pega os sintomas da linha atual
+    linhaAtual = linhaAtual(~ismissing(linhaAtual)); % Remove valores 'missing'
+    totalSintomas = [totalSintomas, linhaAtual];
 end
-sintomasUnicos = unique([totalSintomas{:}]);
+sintomasUnicos = unique([totalSintomas{:}]); % Extrai valores únicos
 
 % Parâmetros do filtro de Bloom
 numHashFuncs = 3; % Número de funções hash
