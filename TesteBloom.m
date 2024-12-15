@@ -2,14 +2,36 @@
 dataset = readcell("SmallTestData.csv");
 dataset = dataset(2:end, :); % Ignorar cabeçalhos, se existirem
 
+
 % Extrair sintomas únicos do dataset
 totalSintomas = {};
 for i = 1:size(dataset, 1)
     linhaAtual = dataset(i, 2:end); % Pega os sintomas da linha atual
     linhaAtual = linhaAtual(~ismissing(linhaAtual)); % Remove valores 'missing'
+    linhaAtual = linhaAtual(~cellfun(@isempty, linhaAtual)); % Remove células vazias
     totalSintomas = [totalSintomas, linhaAtual];
 end
-sintomasUnicos = unique([totalSintomas{:}]); % Extrai valores únicos
+
+% Garantir que totalSintomas contém apenas valores válidos
+sintomasLimpos = {};
+for i = 1:length(totalSintomas)
+    if ~ismissing(totalSintomas{i}) & ~isempty(totalSintomas{i})
+        sintomasLimpos{end+1} = totalSintomas{i};
+    end
+end
+
+% Atualizar totalSintomas
+totalSintomas = sintomasLimpos;
+
+% Converter para strings (caso necessário)
+totalSintomas = cellfun(@char, totalSintomas, 'UniformOutput', false);
+
+% Extrair valores únicos
+sintomasUnicos = unique(totalSintomas);
+
+
+
+
 
 % Parâmetros do filtro de Bloom
 numHashFuncs = 3; % Número de funções hash
