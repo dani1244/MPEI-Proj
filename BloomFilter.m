@@ -1,4 +1,4 @@
-function [filtroBloom, sintomasFiltrados] = bloomFilter(sintomasUnicos, sintomasInput, numHashFuncs, tamanhoFiltro)
+function [filtroBloom, sintomasFiltrados] = BloomFilter(sintomasUnicos, sintomasInput, numHashFuncs, tamanhoFiltro)
     % Inicializar o filtro de Bloom
     filtroBloom = false(tamanhoFiltro, 1);
 

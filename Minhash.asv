@@ -1,0 +1,54 @@
+function [respetivasProbs] = Minhash(dataset, sintomasInput)
+    diagnosticos = dataset(:, 1);
+    doencas = unique(diagnosticos);
+    sintomas = dataset(:, 2:end);
+
+    totalSintomas = {};
+    for i = 1:numel(sintomas)
+        if ~ismissing(sintomas{i})
+            totalSintomas = [totalSintomas; sintomas{i}];
+        end
+    end
+    sintomasUnicos = unique(totalSintomas);
+
+
+
+    %TABELA COM TODOS OS DIAGNOTICOS(COM REPETIÇÃO) E OS SINTOMAS REGISTADOS
+    treino = zeros(length(diagnosticos),length(sintomasUnicos));
+    
+    for linha = 1:length(diagnosticos)
+        sintomas = dataset(linha, 2:end);
+        
+        for col = 1:length(sintomasUnicos)
+            aux = sintomasUnicos{col};
+    
+            num_ocorrencias = sum(strcmpi(sintomas,aux));
+    
+            treino(linha,col) = num_ocorrencias;
+        end
+    end
+
+    %Passar os sintomas pelo string2hash
+    sintomasUnicosHash = zeros(1, length(sintomasUnicos));
+    for i = 1:length(sintomasUnicos)
+        sintomasUnicosHash(i) = string2hash(sintomasUnicos{i});
+    end
+
+    %Permutações aleatorias
+    totalPermutacoes = 100;
+    minhashSignatures = inf(length(diagnosticos), totalPermutacoes);
+
+    for d = 1:length(diagnosticos)
+        sintomasIds = find(treino(d, :) == 1);
+        if ~isempty(sintomasIds)
+            for h = 1:totalPermutacoes
+                randomSeed = h * 42;
+                rng(randomSeed);
+                randomPerm = randperm(length(sintomasUnicos));
+                hashPermuted = hashValues(randomPerm);
+                minhashSignatures(d, h) = min(hashPermuted(sintomasIds));
+            end
+        end
+    end
+
+end

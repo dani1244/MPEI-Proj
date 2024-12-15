@@ -1,0 +1,7 @@
+dataset = readcell("SmallTestData.csv")
+dataset = dataset(2:end, :);
+
+disp("Input : {'S1', 'S3'}")
+disp("Output:")
+disp(Minhash(dataset,{'S1', 'S3'}));
+
