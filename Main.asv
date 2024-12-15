@@ -9,12 +9,22 @@ if resposta == 's'
         MainLoop(defaultDataset,defaultTestDataset(i,:));
 
         resposta = input('Continuar? (n para não)','s');
-        if resposta == 's'
+        if resposta == 'n'
             break
         end
     end
+    disp("Fim do Sintomas.csv");
 else
-    MainLoop(defaultDataset,{'S1', 'S3','S4'});
+    listaSintomas = {};
+    while true
+        sintoma = input('Escreva um sintomas (fim para finalizar): ', 's');
+        if sintoma == "fim" 
+            break
+        else
+            listaSintomas = [listaSintomas; sintoma;
+        end
+    end
+    MainLoop(defaultDataset, symptomsInput); % Pass the collected symptoms to MainLoop
 end
 
 
@@ -36,8 +46,8 @@ function [] = MainLoop(dataset,sintomasInput)
     
     disp("Sintomas filtrados pelo BloomFilter ")
     disp(sintomasFiltrados)
-    disp("Probabilidade para cada doença segundo o naive bayes")
+    disp("Probabilidade para cada doença segundo o Naive Bayes")
     disp(NaiveBayes(dataset, false,sintomasFiltrados));
-
-
+    disp("Distancias de Jaccard entre diagnosticos existentes e os sintomas inseridos, segundo o minhash")
+    disp(Minhash(dataset,sintomasFiltrados))
 end
