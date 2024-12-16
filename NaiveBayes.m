@@ -29,7 +29,6 @@ function [respetivasProbs] = NaiveBayes(dataset,printsIntermedios,sintomasInput)
     end
 
     if printsIntermedios
-        disp("\n\n\nNAIVE BAYES")
         disp("Tabela de treino")
         disp(treino);
     end
